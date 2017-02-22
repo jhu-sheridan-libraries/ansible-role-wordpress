@@ -1,2 +1,6 @@
 ---
 # defaults file for jhu-role-wordpress
+wordpress_version: "4.7.2"
+wordpress_official_name: wordpress-{{ wordpress_version }}
+wordpress_home: "/opt/{{ wordpress_official_name }}"
+wordpress_url: https://wordpress.org/{{ wordpress_official_name }}.tar.gz
