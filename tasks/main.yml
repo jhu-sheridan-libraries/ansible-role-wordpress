@@ -5,16 +5,73 @@
   file:
     path: "{{ wordpress_home }}"
     state: directory
-    mode: 0755
+    mode: 0775
     owner: ops
     group: ops
 
-- name: Unarchive wordpress download and create hidden file
-  unarchive:
-    src: "{{ wordpress_url }}"
-    dest: "{{ wordpress_home }}/../"
+- name: Install wp-cli.phar from Github
+  get_url: url={{ wpcli_phar_url }} dest={{wpcli_bin_location}} mode=0755
+
+- name: Set default ACLs for ops user
+  acl:
+    path: '{{ wordpress_home }}'
+    default: yes
+    entity: '{{ item.name }}'
+    etype: '{{ item.type }}'
+    permissions: '{{ item.permissions }}'
+    state: present
+  with_items:
+    - "{{ acls }}"
+
+- name: Set ACLs for ops user
+  acl:
+    path: '{{ wordpress_home }}'
+    entity: '{{ item.name }}'
+    etype: '{{ item.type }}'
+    permissions: '{{ item.permissions }}'
+    state: present
+  with_items:
+    - "{{ acls }}"
+
+- name: Set mode on {{ wordpress_home }} and recurse
+  file:
+    path: "{{ wordpress_home }}"
+    mode: "g=rwX"
+    recurse: yes
+
+- name: Download wordpress using wp-cli into {{ wordpress_home }}
+  command: /usr/local/bin/wp core download --path={{wordpress_home}}
+  args:
+    creates: "{{ wordpress_home }}/index.php"
+
+- name: Configure wordpress using the template
+  template:
+    src: wp-config.php.j2
+    dest: "{{ wordpress_home }}/wp-config.php"
     owner: ops
     group: ops
-    remote_src: True
-    creates: "{{ wordpress_url }}/.{{ wordpress_version }}"
-  notify: touch version file
+    mode: 0644
+
+- name: Ensure wp-config-sample.php does not exist
+  file:
+    path: "{{ wordpress_home }}/wp-config-sample.php"
+    state: absent
+
+- name: Run wp core install 
+  command: /usr/local/bin/wp core install --url="{{ wordpress_url }}" --title="{{ wordpress_title }}" --admin_user="{{ wordpress_user }}" --admin_email="{{ wordpress_email }}" --path="{{ wordpress_home }}"
+
+- name: Run wp plugin to install plugins
+  command: /usr/local/bin/wp plugin install {{ item }} --path="{{ wordpress_home }}"
+  with_items:
+    - "{{ wordpress_plugins }}"
+
+- name: Run wp plugin active on {{ item }}
+  command: /usr/local/bin/wp plugin activate {{ item }} --path="{{ wordpress_home }}"
+  with_items:
+    - "{{ wordpress_plugins }}"
+
+- name: Run wp user update on admin user to set Password
+  command: /usr/local/bin/wp user update 1 --user_pass="{{ wordpress_admin_password }}" --path="{{ wordpress_home }}"
+
+- debug:
+    var: "{{ wordpress_admin_password }}"

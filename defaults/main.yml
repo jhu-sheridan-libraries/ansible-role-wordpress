@@ -4,3 +4,6 @@ wordpress_version: "4.7.2"
 wordpress_official_name: wordpress-{{ wordpress_version }}
 wordpress_home: "/opt/{{ wordpress_official_name }}"
 wordpress_url: https://wordpress.org/{{ wordpress_official_name }}.tar.gz
+
+wpcli_phar_url: https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+wpcli_bin_location: /usr/local/bin/wp
