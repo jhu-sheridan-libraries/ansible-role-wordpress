@@ -5,7 +5,6 @@
   file:
     path: "{{ wordpress_home }}"
     state: directory
-    mode: 0775
     owner: ops
     group: ops
 
@@ -33,16 +32,16 @@
   with_items:
     - "{{ acls }}"
 
-- name: Set mode on {{ wordpress_home }} and recurse
-  file:
-    path: "{{ wordpress_home }}"
-    mode: "g=rwX"
-    recurse: yes
-
 - name: Download wordpress using wp-cli into {{ wordpress_home }}
   command: /usr/local/bin/wp core download --path={{wordpress_home}}
   args:
     creates: "{{ wordpress_home }}/index.php"
+  register: wordpress_download
+
+- name: Ensure wp-config-sample.php does not exist
+  file:
+    path: "{{ wordpress_home }}/wp-config-sample.php"
+    state: absent
 
 - name: Configure wordpress using the template
   template:
@@ -50,28 +49,33 @@
     dest: "{{ wordpress_home }}/wp-config.php"
     owner: ops
     group: ops
-    mode: 0644
-
-- name: Ensure wp-config-sample.php does not exist
-  file:
-    path: "{{ wordpress_home }}/wp-config-sample.php"
-    state: absent
 
 - name: Run wp core install 
   command: /usr/local/bin/wp core install --url="{{ wordpress_url }}" --title="{{ wordpress_title }}" --admin_user="{{ wordpress_user }}" --admin_email="{{ wordpress_email }}" --path="{{ wordpress_home }}"
+  when: wordpress_download.changed
+
+- name: Set mode on {{ wordpress_home }} and recurse
+  file:
+    path: "{{ wordpress_home }}"
+    mode: "g=rwX"
+    recurse: yes
+  when: wordpress_download.changed
 
 - name: Run wp plugin to install plugins
   command: /usr/local/bin/wp plugin install {{ item }} --path="{{ wordpress_home }}"
   with_items:
     - "{{ wordpress_plugins }}"
+  when: wordpress_download.changed
 
 - name: Run wp plugin active on {{ item }}
   command: /usr/local/bin/wp plugin activate {{ item }} --path="{{ wordpress_home }}"
   with_items:
     - "{{ wordpress_plugins }}"
+  when: wordpress_download.changed
 
 - name: Run wp user update on admin user to set Password
   command: /usr/local/bin/wp user update 1 --user_pass="{{ wordpress_admin_password }}" --path="{{ wordpress_home }}"
+  when: wordpress_download.changed
 
 - debug:
-    var: "{{ wordpress_admin_password }}"
+    var: wordpress_download
