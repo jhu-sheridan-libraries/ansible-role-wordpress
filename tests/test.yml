@@ -2,4 +2,6 @@
 - hosts: localhost
   remote_user: root
   roles:
+    - jhu-sheridan-libraries.apachehttpd
+    - jhu-sheridan-libraries.php
     - role_under_test
