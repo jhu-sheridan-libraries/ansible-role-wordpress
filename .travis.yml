@@ -3,29 +3,21 @@ services: docker
 
 env:
   - distro: centos7
-    init: /usr/lib/systemd/systemd
-    run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro --cap-add=NET_ADMIN"
+    playbook: test.yml
 
 before_install:
   - 'docker pull geerlingguy/docker-${distro}-ansible:latest'
 
 script:
-  - container_id=$(mktemp)
+  - export container_id=$(date +%s)
+  - export cleanup=false
 
-  - 'docker run --detach --volume="${PWD}":/etc/ansible/roles/role_under_test:ro ${run_opts} geerlingguy/docker-${distro}-ansible:latest "${init}" > "${container_id}"'
+  # Download test shim (ripped from Jeff Geerling)
+  - wget -O ${PWD}/tests/test.sh https://gist.githubusercontent.com/derekbelrose/239c91e8aa62a8d72f4a9e3a0b31d658/raw/4298947d0b1bb602913bbf46102abf43f5fe7dce/ansible-role-test.sh
+  - chmod +x ${PWD}/tests/test.sh
 
-  - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml --syntax-check'
-
-  - 'docker exec "$(cat ${container_id})" ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml'
-  
-  #testing idempotency
-  - idempotence=$(mktemp)
-  - docker exec "$(cat ${container_id})" ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml | tee -a ${idempotence}
-  - >
-    tail ${idempotence}
-    | grep -q 'changed=0.*failed=0'
-    && (echo 'Idempotence test: pass' && exit 0)
-    || (echo 'Idempotence test: fail' && exit 1)
+  # Run Tests
+  - ${PWD}/tests/test.sh
 
 notifications:
   webhooks:
