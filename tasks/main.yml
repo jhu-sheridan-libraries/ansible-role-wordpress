@@ -31,10 +31,11 @@
 - name: Set ACLs for wordpress user
   acl:
     path: '{{ wordpress_home }}'
-    entity: '{{ item.name }}'
-    etype: '{{ item.type }}'
+    entity: '{{ item.entity }}'
+    etype: '{{ item.etype }}'
     permissions: '{{ item.permissions }}'
     state: present
+    default: '{{ item.default }}'
   with_items:
     - "{{ acls }}"
 

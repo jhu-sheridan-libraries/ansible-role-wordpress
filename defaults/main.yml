@@ -10,3 +10,16 @@ wpcli_bin_location: /usr/local/bin/wp
 
 wordpress_user: wordpress
 wordpress_user_name: Wordpress User
+
+wordpress_acls:
+  - entity: "{{ wp_user }}"
+    etype: user
+    recursive: yes
+    permissions: rwx
+    default: yes
+    
+  - entity: "{{ wp_user }}" 
+    etype: user
+    recursive: yes
+    permssisions: rwx
+    default: no
