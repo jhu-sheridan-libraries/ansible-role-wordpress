@@ -17,17 +17,6 @@
 - name: Install wp-cli.phar from Github
   get_url: url={{ wpcli_phar_url }} dest={{wpcli_bin_location}} mode=0755
 
-- name: Set default ACLs for wordpress user
-  acl:
-    path: '{{ wordpress_home }}'
-    default: yes
-    entity: '{{ item.name }}'
-    etype: '{{ item.type }}'
-    permissions: '{{ item.permissions }}'
-    state: present
-  with_items:
-    - "{{ acls }}"
-
 - name: Set ACLs for wordpress user
   acl:
     path: '{{ wordpress_home }}'
