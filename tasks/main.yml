@@ -37,7 +37,7 @@
     state: present
     default: '{{ item.default }}'
   with_items:
-    - "{{ acls }}"
+    - "{{ wordpress_acls }}"
 
 - name: Download wordpress using wp-cli into {{ wordpress_home }}
   command: /usr/local/bin/wp core download --path={{wordpress_home}}
