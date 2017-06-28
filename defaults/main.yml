@@ -12,14 +12,13 @@ wordpress_user: wordpress
 wordpress_user_name: Wordpress User
 
 wordpress_acls:
-  - entity: "{{ wordpress_user }}"
+  - { entity: "{{ wordpress_user }}"
     etype: user
     recursive: yes
     permissions: rwx
-    default: yes
-
-  - entity: "{{ wordpress_user }}" 
+    default: yes }
+  - { entity: "{{ wordpress_user }}" 
     etype: user
     recursive: yes
     permssisions: rwx
-    default: no
+    default: no }
